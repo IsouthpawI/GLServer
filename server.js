@@ -15,39 +15,40 @@ app.post('/getemployee', (req, res, callbackL) => {
     };
 
 
-    // let con = mysql.createConnection({
-    //     host: "localhost",
-    //     user: "root",
-    //     password: "",
-    //     database: "glbank",
-    //     port: "3306"
-    // });
-
     let con = mysql.createConnection({
-        host: "itsovy.sk",
-        user: "glbank",
-        password: "password",
+        host: "localhost",
+        user: "root",
+        password: "",
         database: "glbank",
         port: "3306"
     });
+
+    // school database;
+    // let con = mysql.createConnection({
+    //     host: "itsovy.sk",
+    //     user: "glbank",
+    //     password: "password",
+    //     database: "glbank",
+    //     port: "3306"
+    // });
 
 
     con.connect((err) => {
 
         if (err) console.log(err);
 
-        //my database;
+        // my database;
         // let sql = "SELECT id,login,password,ide FROM loginEmp;";
 
-        //school database;
-        let sql = "SELECT id,login,password,ide FROM loginemp;";
+        // school database;
+        let sql = "SELECT id,login,password,ide FROM loginEmp;";
 
         con.query(sql, (err, res) => {
             if (err) console.log(err);
 
             if (res.length == 0) {
-                console.log("No user in database!");
-                callbackL(401, "No user in database!");
+                console.log("No employee in database!");
+                callbackL(401, "No employee in database!");
             }
             else {
                 console.log(res);
@@ -58,6 +59,40 @@ app.post('/getemployee', (req, res, callbackL) => {
     });
 });
 
+app.post('/getclient', (req, res, callbackL) => {
+    console.log("Request on /getclient");
+    callbackL = function (status, value) {
+        res.status(status).send(value);
+    };
+
+    let con = mysql.createConnection({
+        host: "localhost",
+        user: "root",
+        password: "",
+        database: "glbank",
+        port: "3306"
+    });
+
+    con.connect((err) => {
+
+        if (err) console.log(err);
+
+        let sql = "SELECT id,fname,lname,email FROM client;";
+
+        con.query(sql, (err, res) => {
+            if (err) console.log(err);
+
+            if (res.length == 0) {
+                console.log("No user in database!");
+                callbackL(401, "No user in database!");
+            } else {
+                console.log(res);
+                callbackL(200, res);
+            }
+            con.end();
+        });
+    });
+});
 
 app.listen(1203, () => {
     console.log("Sever listening on port 1203");
