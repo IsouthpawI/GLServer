@@ -3,14 +3,13 @@ const express = require('express');
 const mysql = require('mysql');
 const cors = require('cors');
 
-
-var app = express();
+let app = express();
 app.use(express.json());
 app.use(cors());
 
 
-app.post('/getemployees', (req, res, callbackL) => {
-    console.log("Request on /getemployees");
+app.post('/getemployee', (req, res, callbackL) => {
+    console.log("Request on /getemployee");
     callbackL = function (status, value) {
         res.status(status).send(value);
     };
@@ -29,7 +28,7 @@ app.post('/getemployees', (req, res, callbackL) => {
 
         if (err) console.log(err);
 
-        let sql = "SELECT ide,login,password FROM loginEmp;";
+        let sql = "SELECT id,login,password,ide FROM loginEmp;";
 
         con.query(sql, (err, res) => {
             if (err) console.log(err);
