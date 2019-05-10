@@ -15,10 +15,18 @@ app.post('/getemployee', (req, res, callbackL) => {
     };
 
 
+    // let con = mysql.createConnection({
+    //     host: "localhost",
+    //     user: "root",
+    //     password: "",
+    //     database: "glbank",
+    //     port: "3306"
+    // });
+
     let con = mysql.createConnection({
-        host: "localhost",
-        user: "root",
-        password: "",
+        host: "itsovy.sk",
+        user: "glbank",
+        password: "password",
         database: "glbank",
         port: "3306"
     });
@@ -28,7 +36,11 @@ app.post('/getemployee', (req, res, callbackL) => {
 
         if (err) console.log(err);
 
-        let sql = "SELECT id,login,password,ide FROM loginEmp;";
+        //my database;
+        // let sql = "SELECT id,login,password,ide FROM loginEmp;";
+
+        //school database;
+        let sql = "SELECT id,login,password,ide FROM loginemp;";
 
         con.query(sql, (err, res) => {
             if (err) console.log(err);
