@@ -1,189 +1,170 @@
-const http = require('http');
-const express = require('express');
-const TokenGenerator = require('uuid-token-generator');
-const crypto = require('crypto');
-const mysql = require('mysql');
-const cors = require('cors');
+let global = require('./global');
+const app = require('express')();
+const bodyParser = require("body-parser");
 
-let token = [];
-
-function checkToken(user) {
-    return user.token == this.token;
-}
-
-let app = express();
-app.use(express.json());
-app.use(cors());
-
-function getIndex(array, name) {
-
-    for (let i = 0; i < array.length; i++) {
-        if (array[i].name == name) {
-            return i;
-        }
-    }
-    return -1;
-}
-
-app.post('/getemployee', (req, res, callbackL) => {
-    console.log("Request on /getemployee");
-    callbackL = function (status, value) {
-        res.status(status).send(value);
-    };
-
-    // my database;
-    // let con = mysql.createConnection({
-    //     host: "localhost",
-    //     user: "root",
-    //     password: "",
-    //     database: "glbank",
-    //     port: "3306"
-    // });
-
-    // school database;
-    let con = mysql.createConnection({
-        host: "itsovy.sk",
-        user: "glbank",
-        password: "password",
-        database: "glbank",
-        port: "3306"
-    });
-
-
-    con.connect((err) => {
-
-        if (err) console.log(err);
-
-        // my database;
-        // let sql = "SELECT id,login,password,ide FROM loginEmp;";
-
-        // school database;
-        let sql = "SELECT id,login,password,ide FROM loginemp;";
-
-        con.query(sql, (err, res) => {
-            if (err) console.log(err);
-
-            if (res.length == 0) {
-                console.log("No employee in database!");
-                callbackL(401, "No employee in database!");
-            }
-            else {
-                console.log(res);
-                callbackL(200, res);
-            }
-            con.end();
-        });
-    });
+app.use(bodyParser.json());
+app.use(function (req, res, next) {
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+    next();
 });
 
-app.post('/getclient', (req, res, callbackL) => {
-    console.log("Request on /getclient");
-    callbackL = function (status, value) {
-        res.status(status).send(value);
-    };
 
-    // my database;
-    // let con = mysql.createConnection({
-    //     host: "localhost",
-    //     user: "root",
-    //     password: "",
-    //     database: "glbank",
-    //     port: "3306"
-    // });
+app.post('/log', function (req, res) {
 
-    // school database;
-    let con = mysql.createConnection({
-        host: "itsovy.sk",
-        user: "glbank",
-        password: "password",
-        database: "glbank",
-        port: "3306"
-    });
-
-
-    con.connect((err) => {
-
-        if (err) console.log(err);
-
-        // my database;
-        // let sql = "SELECT id,login,password,ide FROM loginEmp;";
-
-        // school database;
-        let sql = "SELECT id,login,password,idc FROM loginclient;";
-
-        con.query(sql, (err, res) => {
-            if (err) console.log(err);
-
-            if (res.length == 0) {
-                console.log("No employee in database!");
-                callbackL(401, "No employee in database!");
-            }
-            else {
-                console.log(res);
-                callbackL(200, res);
-            }
-            con.end();
-        });
-    });
-});
-
-app.post('/log', (req, res, callbackFunction) => {
-    callbackFunction = function (status, value) {
-        res.status(status).send(value);
-    };
-
-    let con = mysql.createConnection({
-        host: "itsovy.sk",
-        user: "glbank",
-        password: "password",
-        database: "glbank",
-        port: "3306"
-    });
-
-    let name = req.body.name;
+    let login = req.body.login;
     let password = req.body.password;
-    if (!name || !password) {
-        callbackFunction(401, "Wrong login or password!");
-    } else {
 
-        con.connect((err) => {
-
-            if (err) console.log(err);
-            let hash = crypto.createHash('md5').update(password).digest("hex");
-            let sql = "SELECT login, password FROM loginclient WHERE login like + login AND password like + password;";
-            console.log(sql);
-            console.log("tye: " + typeof(name) + ", " + name);
-            con.query(sql, (err, res) => {
-                if (err || res.length == 0) {
-                    console.log(err);
-                    console.log("Type login and password!");
-                    callbackFunction(401, "Type login and password!");
-                }
-                else {
-                    const tokenGenerator = new TokenGenerator(128, TokenGenerator.BASE62);
-                    let r = {};
-
-                    r.token = tokenGenerator.generate();
-                    r.name = name;
-                    let index = getIndex(token, name);
-
-                    if (index >= 0) {
-                        token[index].token = r.token;
-                    } else {
-                        let l = Object.assign({}, r);
-                        l.id = res[0].idc;
-                        console.log(l);
-                        token.push(l);
-                    }
-                    console.log("try");
-                    console.log(r);
-                    callbackFunction(200, r);
-                }
-
-            });
-            con.end();
-        });
+    if (login == "" || password == "") {
+        res.status(400).send("Incorrect login or password!");
     }
+
+    global.getLog(login, password, function (result) {
+
+        if (result == null) {
+            res.status(400).send("User is not exist!");
+        } else {
+            res.status(200).send(result);
+        }
+
+    });
+
+});
+
+
+app.post('/logout', function (req, res) {
+
+    let login = req.body.login;
+    let token = req.body.token;
+
+    global.getLogout(login, token, function (result) {
+        console.log(result);
+        res.status(result).send(login + " logged out!");
+    });
+
+});
+
+
+app.post('/userinfo', function (req, res) {
+
+    let login = req.body.login;
+    let token = req.body.token;
+
+    global.getUserInfo(login, token, function (result) {
+        res.status(200).send(result);
+    });
+
+});
+
+
+app.post('/account', function (req, res) {
+
+    let login = req.body.login;
+    let id = req.body.id;
+    let token = req.body.token;
+
+
+    global.getAccount(login, id, token, function (result) {
+        if (result == null) {
+            res.status(400).send("Error!");
+        } else {
+            res.status(200).send(result);
+        }
+    });
+
+});
+
+
+app.post('/accinfo', function (req, res) {
+
+    let login = req.body.login;
+    let token = req.body.token;
+    let accNum = req.body.accNum;
+
+    global.getAccInfo(login, token, accNum, function (result) {
+
+        if (result == null) {
+            res.status(400).send("Error!");
+        } else {
+            res.status(200).send(result);
+        }
+    });
+
+});
+
+
+app.post('/transactionhistory', function (req, res) {
+
+    let login = req.body.login;
+    let idAcc = req.body.idAcc;
+    let token = req.body.token;
+
+    global.getTransactionHistory(login, idAcc, token, function (result) {
+
+        if (result == null) {
+            res.status(400).send("Error!");
+        } else {
+            res.status(200).send(result);
+        }
+    });
+
+});
+
+
+app.post('/card', function (req, res) {
+
+    let login = req.body.login;
+    let idAcc = req.body.idAcc;
+    let token = req.body.token;
+
+
+    global.getCard(login, idAcc, token, function (result) {
+
+        if (result == null) {
+            res.status(400).send("Error!");
+        } else {
+            res.status(200).send(result);
+        }
+    });
+
+});
+
+
+app.post('/cardinfo', function (req, res) {
+
+    let login = req.body.login;
+    let idCard = req.body.idCard;
+    let token = req.body.token;
+
+
+    global.getCardInfo(login, idCard, token, function (result) {
+
+        if (result == null) {
+            res.status(400).send("Error!");
+        } else {
+            res.status(200).send(result);
+        }
+    });
+
+});
+
+
+app.post('/cardtransaction', function (req, res) {
+
+    let login = req.body.login;
+    let idCard = req.body.idCard;
+    let token = req.body.token;
+
+
+    global.getCardTransaction(login, idCard, token, function (result) {
+
+        if (result == null) {
+            res.status(400).send("Error!");
+        } else {
+            res.status(200).send(result);
+        }
+    });
+
 });
 
 app.listen(1203, () => {
